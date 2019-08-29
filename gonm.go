@@ -33,7 +33,6 @@ type Gonm struct {
 	Context context.Context
 	cache   *cache
 	pending []*pendingStruct
-	tkeys   []*datastore.Key
 	m       sync.Mutex
 }
 
@@ -150,6 +149,10 @@ func (gm *Gonm) DeleteMulti(dst interface{}) error {
 				hi = len(keys)
 			}
 
+			for _, key := range keys[lo:hi] {
+				gm.cache.delete(key)
+			}
+
 			var err error
 			if gm.Transaction != nil {
 				err = gm.Transaction.DeleteMulti(keys[lo:hi])
@@ -163,15 +166,6 @@ func (gm *Gonm) DeleteMulti(dst interface{}) error {
 				return gm.stackError(err)
 			}
 
-			if gm.Transaction != nil {
-				gm.m.Lock()
-				defer gm.m.Unlock()
-				gm.tkeys = append(gm.tkeys, keys[lo:hi]...)
-				return nil
-			}
-			for _, key := range keys[lo:hi] {
-				gm.cache.delete(key)
-			}
 			return nil
 		})
 	}
@@ -187,7 +181,6 @@ func (gm *Gonm) DeleteMulti(dst interface{}) error {
 //
 // If there is no such entity for the key, get returns datastore.ErrNoSuchEntity.
 // Dst must be a *S, and returning datastore.ErrFieldMissMatch if dst is not struct pointer
-// Also, the structure is complemented with ID after this method.
 func (gm *Gonm) Get(dst interface{}) error {
 	return gm.get(dst, true)
 }
@@ -223,7 +216,6 @@ func (gm *Gonm) get(dst interface{}, cache bool) error {
 // GetByKey is getting object from datastore by datastore.Key.
 //
 // Usage is almost the same as datastore.Client.Get.
-// Also, the structure is complemented with ID after this method.
 // This method use cache.
 func (gm *Gonm) GetByKey(key *datastore.Key, dst interface{}) error {
 	v := reflect.ValueOf(dst)
@@ -244,7 +236,6 @@ func (gm *Gonm) GetByKey(key *datastore.Key, dst interface{}) error {
 // GetMulti is a batch version of Get.
 //
 // Dst must have type *[]S, *[]*S or *[]P.
-// Also, all structures are complemented with IDs after this method.
 func (gm *Gonm) GetMulti(dst interface{}) error {
 	keys, err := extractKeys(dst, false)
 	if err != nil {
@@ -265,7 +256,6 @@ func (gm *Gonm) GetMultiConsistency(dst interface{}) error {
 // GetMultiByKeys is getting object from datastore by datastore.Key.
 //
 // Usage is almost the same as datastore.Client.GetMulti.
-// Also, all structures are complemented with IDs after this method.
 // this method use cache
 func (gm *Gonm) GetMultiByKeys(keys []*datastore.Key, dst interface{}) error {
 	if gm.Transaction != nil {
@@ -279,15 +269,16 @@ func (gm *Gonm) GetMultiByKeys(keys []*datastore.Key, dst interface{}) error {
 
 	for i, key := range keys {
 		vi := v.Index(i)
+
 		if vi.Kind() == reflect.Struct {
 			vi = vi.Addr()
 		}
 
 		if data, ok := gm.cache.get(key); ok {
-			dv := reflect.ValueOf(data)
 			if vi.Kind() == reflect.Interface {
 				vi = vi.Elem()
 			}
+			dv := reflect.ValueOf(data)
 			// []interface{}{*S}, []S, []*S, []interface{}{*S[0]} are all different object
 			switch {
 			case vi.CanSet() && vi.Kind() == dv.Kind():
@@ -331,6 +322,9 @@ func (gm *Gonm) getMultiByKeysConsistency(keys []*datastore.Key, dst interface{}
 
 			var err error
 			if gm.Transaction != nil {
+				for _, key := range keys[lo:hi] {
+					gm.cache.delete(key)
+				}
 				err = gm.Transaction.GetMulti(keys[lo:hi], v.Slice(lo, hi).Interface())
 				if err != nil {
 					if merr, ok := err.(datastore.MultiError); ok {
@@ -338,11 +332,6 @@ func (gm *Gonm) getMultiByKeysConsistency(keys []*datastore.Key, dst interface{}
 					}
 					return gm.stackError(err)
 				}
-
-				gm.m.Lock()
-				defer gm.m.Unlock()
-				gm.tkeys = append(gm.tkeys, keys[lo:hi]...)
-
 				return nil
 			} else {
 				err = gm.Client.GetMulti(gm.Context, keys[lo:hi], v.Slice(lo, hi).Interface())
@@ -350,11 +339,15 @@ func (gm *Gonm) getMultiByKeysConsistency(keys []*datastore.Key, dst interface{}
 					if merr, ok := err.(datastore.MultiError); ok {
 						multiError = append(multiError, merr...)
 					}
+					for _, key := range keys[lo:hi] {
+						gm.cache.delete(key)
+					}
 					return gm.stackError(err)
 				}
 
 				for i, key := range keys[lo:hi] {
-					gm.cache.set(key, v.Slice(lo, hi).Index(i).Interface())
+					vi := v.Index(lo + i).Interface()
+					gm.cache.set(key, vi)
 				}
 				return nil
 			}
@@ -392,7 +385,7 @@ func (gm *Gonm) Put(src interface{}) (*datastore.Key, error) {
 }
 
 // PutMulti is a batch version of Put.
-// Put receive []*S, []S, *[]S and *[]*S and put []*S into datastore.
+// Put receive []*S and put []*S into datastore.
 //
 // Also, all structures are complemented with IDs after this method.
 func (gm *Gonm) PutMulti(src interface{}) ([]*datastore.Key, error) {
@@ -426,17 +419,26 @@ func (gm *Gonm) PutMulti(src interface{}) ([]*datastore.Key, error) {
 					if merr, ok := err.(datastore.MultiError); ok {
 						multiError = append(multiError, merr...)
 					}
+					for _, key := range keys[lo:hi] {
+						if !key.Incomplete() {
+							gm.cache.delete(key)
+						}
+					}
 					return gm.stackError(err)
 				}
 
-				gm.m.Lock()
-				defer gm.m.Unlock()
-				for i, key := range pkeys {
-					gm.pending = append(gm.pending,
-						&pendingStruct{
-							pkey: key,
-							dst:  v.Slice(lo, hi).Index(i).Interface(),
-						})
+				for i, key := range keys[lo:hi] {
+					if key.Incomplete() {
+						gm.m.Lock()
+						gm.pending = append(gm.pending,
+							&pendingStruct{
+								pkey: pkeys[i],
+								dst:  v.Slice(lo, hi).Index(i).Interface(),
+							})
+						gm.m.Unlock()
+					} else {
+						gm.cache.delete(key)
+					}
 				}
 				return nil
 
@@ -445,6 +447,11 @@ func (gm *Gonm) PutMulti(src interface{}) ([]*datastore.Key, error) {
 				if err != nil {
 					if merr, ok := err.(datastore.MultiError); ok {
 						multiError = append(multiError, merr...)
+					}
+					for _, key := range keys[lo:hi] {
+						if !key.Incomplete() {
+							gm.cache.delete(key)
+						}
 					}
 					return gm.stackError(err)
 				}

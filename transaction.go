@@ -28,7 +28,7 @@ type GonmTx struct {
 // If you want to get pending key, you should use NewTransaction or *Gonm.Transaction.Put(key, src).
 func (gm *Gonm) RunInTransaction(f func(gm *Gonm) error, otps ...datastore.TransactionOption) (cmt *datastore.Commit, err error) {
 
-	gmtx := &Gonm{Context: gm.Context}
+	gmtx := &Gonm{Context: gm.Context, cache: gm.cache}
 	cmt, err = gm.Client.RunInTransaction(gm.Context, func(tx *datastore.Transaction) error {
 		gmtx.Transaction = tx
 		return f(gmtx)
@@ -39,13 +39,8 @@ func (gm *Gonm) RunInTransaction(f func(gm *Gonm) error, otps ...datastore.Trans
 		return nil, err
 	}
 
-	for _, key := range gmtx.tkeys {
-		gm.cache.delete(key)
-	}
-
 	for _, pending := range gmtx.pending {
 		key := cmt.Key(pending.pkey)
-		gm.cache.delete(key)
 		if err := setStructKey(pending.dst, key); err != nil {
 			return cmt, gm.stackError(err)
 		}
@@ -68,13 +63,17 @@ func (gm *Gonm) NewTransaction(otps ...datastore.TransactionOption) (gmtx *GonmT
 }
 
 // Commit applies the enqueued operations atomically.
-// Also, all cache is clear when this method run.
 func (gmtx *GonmTx) Commit() (cm *datastore.Commit, err error) {
 	cm, err = gmtx.Transaction.Commit()
 	if err != nil {
 		return nil, err
 	}
-	gmtx.gonm.cache.clear()
+	for _, pending := range gmtx.gonm.pending {
+		key := cm.Key(pending.pkey)
+		if err := setStructKey(pending.dst, key); err != nil {
+			return cm, gmtx.gonm.stackError(err)
+		}
+	}
 	return cm, nil
 }
 
@@ -106,7 +105,7 @@ func (gmtx *GonmTx) Mutate(gmuts ...*Mutation) (ret []*datastore.Key, err error)
 // Put is similar as Gonm.Put, but this method return datastore.PendingKey.
 //
 // This method do not change incomple key to complete key.
-// If you want to insert ID, you may use Commit.commit(pendingKey)
+// If you want to use datastore.Key, you may use Commit.commit(pendingKey)
 func (gmtx *GonmTx) Put(src interface{}) (*datastore.PendingKey, error) {
 	v := reflect.ValueOf(src)
 	if v.Kind() != reflect.Ptr {
@@ -132,6 +131,7 @@ func (gmtx *GonmTx) PutMulti(src interface{}) ([]*datastore.PendingKey, error) {
 	v := reflect.Indirect(reflect.ValueOf(src))
 	goroutines := (len(keys)-1)/datastorePutMultiMaxItems + 1
 	var pendingKeys []*datastore.PendingKey
+	var multiError datastore.MultiError
 
 	var eg errgroup.Group
 	for i := 0; i < goroutines; i++ {
@@ -146,26 +146,39 @@ func (gmtx *GonmTx) PutMulti(src interface{}) ([]*datastore.PendingKey, error) {
 			pkeys, err := gmtx.Transaction.PutMulti(keys[lo:hi], v.Slice(lo, hi).Interface())
 
 			if err != nil {
-				merr, ok := err.(datastore.MultiError)
-				if !ok {
-					return gmtx.gonm.stackError(err)
+				if merr, ok := err.(datastore.MultiError); ok {
+					multiError = append(multiError, merr...)
 				}
-				for _, err := range merr {
-					err = gmtx.gonm.stackError(err)
+				for _, key := range keys[lo:hi] {
+					if !key.Incomplete() {
+						gmtx.gonm.cache.delete(key)
+					}
 				}
-				return err
+				return gmtx.gonm.stackError(err)
 			}
 
-			gmtx.gonm.m.Lock()
-			defer gmtx.gonm.m.Unlock()
-			pendingKeys = append(pendingKeys, pkeys...)
-			return nil
-
+			for i, key := range keys[lo:hi] {
+				if key.Incomplete() {
+					gmtx.gonm.m.Lock()
+					gmtx.gonm.pending = append(gmtx.gonm.pending,
+						&pendingStruct{
+							pkey: pkeys[i],
+							dst:  v.Slice(lo, hi).Index(i).Interface(),
+						})
+					pendingKeys = append(pendingKeys, pkeys[i])
+					gmtx.gonm.m.Unlock()
+				} else {
+					gmtx.gonm.cache.delete(key)
+				}
+			}
 			return nil
 		})
 	}
 
 	if err := eg.Wait(); err != nil {
+		if len(multiError) > 0 {
+			return pendingKeys, multiError
+		}
 		return pendingKeys, err
 	}
 

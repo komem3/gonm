@@ -44,18 +44,18 @@ func (gm *Gonm) Mutate(gmuts ...*Mutation) (ret []*datastore.Key, err error) {
 			return nil, gm.stackError(err)
 		}
 
-		gm.m.Lock()
-		defer gm.m.Unlock()
 		for i, key := range pret {
-			if !gmuts[i].key.Incomplete() {
-				gm.tkeys = append(gm.tkeys, gmuts[i].key)
-				continue
+			if gmuts[i].key.Incomplete() {
+				gm.m.Lock()
+				gm.pending = append(gm.pending,
+					&pendingStruct{
+						pkey: key,
+						dst:  gmuts[i].src,
+					})
+				gm.m.Unlock()
+			} else {
+				gm.cache.delete(gmuts[i].key)
 			}
-			gm.pending = append(gm.pending,
-				&pendingStruct{
-					pkey: key,
-					dst:  gmuts[i].src,
-				})
 		}
 		return nil, nil
 	} else {
@@ -69,8 +69,9 @@ func (gm *Gonm) Mutate(gmuts ...*Mutation) (ret []*datastore.Key, err error) {
 				if err = setStructKey(gmut.src, ret[i]); err != nil {
 					return ret, gm.stackError(err)
 				}
+			} else {
+				gm.cache.delete(ret[i])
 			}
-			gm.cache.delete(ret[i])
 		}
 	}
 
