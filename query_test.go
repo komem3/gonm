@@ -57,19 +57,21 @@ func TestGonm_GetKeysOnly(t *testing.T) {
 		t.Fatal(gm.printStackErrs(err))
 	}
 
+	gm.CacheClear()
+
 	q := datastore.NewQuery(Kind(testModel{})).Limit(2)
 
 	keys, cursor, err := gm.GetKeysOnly(q)
-	dst := make([]*testModel, len(keys))
+	dst := make([]testModel, len(keys))
 	if err := gm.GetMultiByKeys(keys, dst); err != nil {
 		t.Fatal(gm.printStackErrs(err))
 	}
-	assert.NotZero(t, dst[0].ID, "index 0, KeysOnly query and GetMultiByKey")
-	assert.NotZero(t, dst[0].ID, "index 1, KeysOnly query and GetMultiByKey")
+	assert.NotEqual(t, "", dst[0].Name, "index 0, KeysOnly query and GetMultiByKey")
+	assert.NotEqual(t, "", dst[1].Name, "index 1, KeysOnly query and GetMultiByKey")
 
 	q = q.Start(cursor)
 	keys, cursor, err = gm.GetKeysOnly(q)
-	secondDst := make([]*testModel, len(keys))
+	secondDst := make([]testModel, len(keys))
 	if err := gm.GetMultiByKeys(keys, secondDst); err != nil {
 		t.Fatal(gm.printStackErrs(err))
 	}
@@ -77,7 +79,7 @@ func TestGonm_GetKeysOnly(t *testing.T) {
 
 	q = q.End(cursor)
 	keys, _, err = gm.GetKeysOnly(q)
-	thirdDst := make([]*testModel, len(keys))
+	thirdDst := make([]testModel, len(keys))
 	if err := gm.GetMultiByKeys(keys, thirdDst); err != nil {
 		t.Fatal(gm.printStackErrs(err))
 	}

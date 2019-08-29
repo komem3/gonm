@@ -151,7 +151,7 @@ func ExampleGonm_GetKeysOnly() {
 		// TODO: Handle error.
 	}
 
-	dst := make([]*User, len(keys))
+	dst := make([]User, len(keys))
 	if err := gm.GetMultiByKeys(keys, dst); err != nil {
 		// TODO: Handle error.
 	}

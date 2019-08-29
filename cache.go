@@ -16,6 +16,11 @@ type cache struct {
 	hashMap *sync.Map
 }
 
+// CacheClear clear local cache
+func (gm *Gonm) CacheClear() {
+	gm.cache.clear()
+}
+
 func newCache() *cache {
 	return &cache{&sync.Map{}}
 }

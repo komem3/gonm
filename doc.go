@@ -83,7 +83,7 @@ Gonm support Run and GetAll, but I reconmmend using GetKeysOnly.
 	q := datastore.NewQuery("User").Limit(2)
 
 	keys, cursor, err := gm.GetKeysOnly(q)
-	dst := make([]*User, len(keys))
+	dst := make([]User, len(keys))
 	if err := gm.GetMultiByKeys(keys, dst); err != nil {
 	   // TODO: Handle error.
 	}
