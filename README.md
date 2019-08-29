@@ -1,6 +1,6 @@
 # gonm
 
-[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/golang/gddo)
+[![GoDoc](https://godoc.org/github.com/golang/gddo?status.svg)](https://godoc.org/github.com/komem3/gonm)
 
 Package gonm automatically assigns a key from the interface, and autocahing interface local memory.
 
