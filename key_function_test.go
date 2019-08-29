@@ -56,14 +56,14 @@ func TestGetStructKey(t *testing.T) {
 	assert.Equal("/testModel,2", key.String(), "pkey name is struct name")
 	assert.Equal(false, key.Incomplete(), "pkey is not incomplete")
 
-	test2 := testModel2{Kind: "testModeller", Parent: datastore.IDKey("kind", 1, nil)}
+	test2 := &testModel2{Kind: "testModeller", Parent: datastore.IDKey("kind", 1, nil)}
 	key, err = getStructKey(test2)
 	if err != nil {
 		t.Fatal(err)
 	}
 	assert.Equal("/kind,1/testModeller,0", key.String(), "pkey name is Kind name")
 
-	test2 = testModel2{}
+	test2 = &testModel2{}
 	key, err = getStructKey(test2)
 	if err != nil {
 		t.Fatal(err)
@@ -80,10 +80,13 @@ func TestSetStructKey(t *testing.T) {
 	key := datastore.IDKey("test", 1, parentKey)
 	test := &testModel2{}
 
-	setStructKey(test, key)
+	if err := setStructKey(test, key); err != nil {
+		t.Fatal(err)
+	}
 	assert.Equal(t, "test", test.Kind, "kind property set kind of pkey")
 	assert.Equal(t, int64(1), test.Id, "Id property set id of pkey")
 	assert.Equal(t, parentKey, test.Parent, "parent property set parent pkey of pkey")
+
 }
 
 func TestKind(t *testing.T) {

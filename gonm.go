@@ -428,12 +428,13 @@ func (gm *Gonm) PutMulti(src interface{}) ([]*datastore.Key, error) {
 				}
 
 				for i, key := range keys[lo:hi] {
+					vi := v.Slice(lo, hi)
 					if key.Incomplete() {
 						gm.m.Lock()
 						gm.pending = append(gm.pending,
 							&pendingStruct{
 								pkey: pkeys[i],
-								dst:  v.Slice(lo, hi).Index(i).Interface(),
+								dst:  vi.Index(i).Interface(),
 							})
 						gm.m.Unlock()
 					} else {
