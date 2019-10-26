@@ -13,11 +13,8 @@ func TestGonm_GetAll(t *testing.T) {
 
 	ctx := context.Background()
 
-	gm, err := FromContext(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer gm.Close()
+	var err error
+	gm := FromContext(ctx, testDsClient)
 
 	putModel := []*testModel{
 		{ID: 1, Name: "Michael"},
@@ -41,11 +38,8 @@ func TestGonm_GetAll(t *testing.T) {
 func TestGonm_GetKeysOnly(t *testing.T) {
 	ctx := context.Background()
 
-	gm, err := FromContext(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer gm.Close()
+	var err error
+	gm := FromContext(ctx, testDsClient)
 
 	putModel := []*testModel{
 		{ID: 1, Name: "Michael"},

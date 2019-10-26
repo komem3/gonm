@@ -26,11 +26,8 @@ func setupModel(prepare bool) []*testModel {
 func BenchmarkSimpleGet(b *testing.B) {
 	ctx := context.Background()
 
-	gm, err := FromContext(ctx)
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer gm.Close()
+	var err error
+	gm := FromContext(ctx, testDsClient)
 
 	var keys []*datastore.Key
 	putModel := setupModel(true)
@@ -66,11 +63,8 @@ func BenchmarkSimpleGet(b *testing.B) {
 func BenchmarkGonm_GetConsistency(b *testing.B) {
 	ctx := context.Background()
 
-	gm, err := FromContext(ctx)
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer gm.Close()
+	var err error
+	gm := FromContext(ctx, testDsClient)
 
 	putModel := setupModel(true)
 
@@ -90,11 +84,8 @@ func BenchmarkGonm_GetConsistency(b *testing.B) {
 func BenchmarkGonm_Get(b *testing.B) {
 	ctx := context.Background()
 
-	gm, err := FromContext(ctx)
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer gm.Close()
+	var err error
+	gm := FromContext(ctx, testDsClient)
 
 	putModel := setupModel(true)
 
@@ -114,11 +105,8 @@ func BenchmarkGonm_Get(b *testing.B) {
 func BenchmarkSimplePut(b *testing.B) {
 	ctx := context.Background()
 
-	gm, err := FromContext(ctx)
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer gm.Close()
+	var err error
+	gm := FromContext(ctx, testDsClient)
 
 	var eg errgroup.Group
 	putModel := setupModel(true)
@@ -152,11 +140,8 @@ func BenchmarkSimplePut(b *testing.B) {
 func BenchmarkGonm_Put(b *testing.B) {
 	ctx := context.Background()
 
-	gm, err := FromContext(ctx)
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer gm.Close()
+	var err error
+	gm := FromContext(ctx, testDsClient)
 
 	putModel := setupModel(true)
 

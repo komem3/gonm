@@ -12,11 +12,8 @@ import (
 func TestGonm_Mutate(t *testing.T) {
 	ctx := context.Background()
 
-	gm, err := FromContext(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer gm.Close()
+	var err error
+	gm := FromContext(ctx, testDsClient)
 
 	t.Run("normal mutate", func(t *testing.T) {
 		putModel := []*testModel{

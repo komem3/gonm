@@ -13,11 +13,8 @@ func TestGonm_RunInTransaction(t *testing.T) {
 	assert := assert.New(t)
 	ctx := context.Background()
 
-	gm, err := FromContext(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer gm.Close()
+	var err error
+	gm := FromContext(ctx, testDsClient)
 
 	t.Run("simple Transaction", func(t *testing.T) {
 		putModel := []testModel{
@@ -126,11 +123,8 @@ func TestGonm_NewTransaction(t *testing.T) {
 	assert := assert.New(t)
 	ctx := context.Background()
 
-	gm, err := FromContext(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer gm.Close()
+	var err error
+	gm := FromContext(ctx, testDsClient)
 
 	t.Run("simple Transaction", func(t *testing.T) {
 		putModel := []testModel{
