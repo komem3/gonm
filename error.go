@@ -15,8 +15,6 @@ import (
 var (
 	// ErrInTransaction is returned when not available method in transaction
 	ErrInTransaction = errors.New("gonm: transaction gonm is not available this method")
-	// ErrInTransaction is returned when not available method in normal
-	ErrNotInTransaction = errors.New("gonm: normal gonm is not available this method")
 	// ErrNoIDField is returned when struct do not have ID field in tag
 	ErrNoIdFiled = errors.New("gonm: At least one ID or id tag")
 )
