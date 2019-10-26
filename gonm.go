@@ -41,17 +41,23 @@ type pendingStruct struct {
 	dst  interface{}
 }
 
-// FromContext generate Gonm from Context.
-func FromContext(ctx context.Context) (*Gonm, error) {
-	client, err := datastore.NewClient(ctx, getProjectID())
-	if err != nil {
-		return nil, err
+// NewDatastoreClient generate datastore.Client.
+// If projectId is none, `DATASTORE_PROJECT_ID` is used for environment variables.
+func NewDatastoreClient(ctx context.Context, projectId ...string) (*datastore.Client, error) {
+	if len(projectId) == 0 {
+		return datastore.NewClient(ctx, getProjectID())
+	} else {
+		return datastore.NewClient(ctx, projectId[0])
 	}
+}
+
+// FromContext generate Gonm from Context.
+func FromContext(ctx context.Context, dsClient *datastore.Client) *Gonm {
 	return &Gonm{
 		Context: ctx,
-		Client:  client,
+		Client:  dsClient,
 		cache:   newCache(),
-	}, nil
+	}
 }
 
 // AllocateID is accepts a incomplete keys and

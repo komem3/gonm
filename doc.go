@@ -17,7 +17,7 @@ It is simple to use gonm.
 		 ID   int64 `datastore:"-"`
 		 Name string
 	}
-	gm := gonm.FromContext(ctx)
+	gm := gonm.FromContext(ctx, dsClient)
 	user := &User{ID: 1}
 	err := gm.Get(user)
 
@@ -39,7 +39,7 @@ example: create child-parent relationship
 		 Name string
 		 Parent *datastore.Key `datastore:"-"`
 	}
-	gm := gom.FromContext(ctx)
+	gm := gom.FromContext(ctx, dsClient)
 
 	parent := &User{Name: "Father"}
 	key, err := gm.Put(parent)

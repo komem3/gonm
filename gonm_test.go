@@ -16,12 +16,8 @@ type testModel struct {
 func TestGonm_AllocateIDs(t *testing.T) {
 	assert := assert.New(t)
 	ctx := context.Background()
-
-	gm, err := FromContext(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer gm.Close()
+	var err error
+	gm := FromContext(ctx, testDsClient)
 
 	test := []*testModel{
 		{Name: "Michel"},
@@ -48,11 +44,8 @@ func TestGonm_AllocateIDs(t *testing.T) {
 func TestGonm_DeleteMulti(t *testing.T) {
 	ctx := context.Background()
 
-	gm, err := FromContext(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer gm.Close()
+	var err error
+	gm := FromContext(ctx, testDsClient)
 
 	putModel := []*testModel{
 		{ID: 1, Name: "Michael"},
@@ -75,11 +68,8 @@ func TestGonm_DeleteMulti(t *testing.T) {
 func TestGonm_PutGet(t *testing.T) {
 	ctx := context.Background()
 
-	gm, err := FromContext(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer gm.Close()
+	var err error
+	gm := FromContext(ctx, testDsClient)
 
 	putModel := &testModel{Name: "Tom"}
 	if _, err = gm.Put(putModel); err != nil {
@@ -117,11 +107,8 @@ func TestGonm_PutGet(t *testing.T) {
 func TestGonm_PutGetMulti(t *testing.T) {
 	ctx := context.Background()
 
-	gm, err := FromContext(ctx)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer gm.Close()
+	var err error
+	gm := FromContext(ctx, testDsClient)
 
 	t.Run("get multi stackError", func(t *testing.T) {
 		var largeModel []*testModel
