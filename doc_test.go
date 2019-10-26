@@ -1,8 +1,7 @@
-// +build ignore
-
 package gonm_test
 
 import (
+	"context"
 	"fmt"
 
 	"cloud.google.com/go/datastore"
@@ -13,6 +12,8 @@ type User struct {
 	ID   int64
 	Name string
 }
+
+var dsClient *datastore.Client
 
 func ExampleKind() {
 	type User struct {
@@ -37,8 +38,19 @@ func ExampleKindWithTag() {
 	// Output: user
 }
 
+func ExampleNewDatastoreClient() {
+	ctx := context.Background()
+	dsClient, err := gonm.NewDatastoreClient(ctx) // or gonm.NewDatastoreClient(ctx, "projectId")
+	if err != nil {
+		panic(err)
+	}
+
+	_ = dsClient
+}
+
 func ExampleGonm_AllocateID() {
-	gm := gonm.FromContext(ctx, testDsClient)
+	ctx := context.Background()
+	gm := gonm.FromContext(ctx, dsClient)
 
 	user := &User{Name: "Hanako"}
 	key, err := gm.AllocateID(user)
@@ -51,7 +63,8 @@ func ExampleGonm_AllocateID() {
 }
 
 func ExampleGonm_AllocateIDs() {
-	gm := gonm.FromContext(ctx, testDsClient)
+	ctx := context.Background()
+	gm := gonm.FromContext(ctx, dsClient)
 
 	users := []*User{
 		{Name: "Michel"},
@@ -67,7 +80,8 @@ func ExampleGonm_AllocateIDs() {
 }
 
 func ExampleGonm_Delete() {
-	gm := gonm.FromContext(ctx, testDsClient)
+	ctx := context.Background()
+	gm := gonm.FromContext(ctx, dsClient)
 
 	if err := gm.Delete(&User{ID: 1}); err != nil {
 		// TODO: Handle error.
@@ -75,7 +89,8 @@ func ExampleGonm_Delete() {
 }
 
 func ExampleGonm_DeleteMulti() {
-	gm := gonm.FromContext(ctx, testDsClient)
+	ctx := context.Background()
+	gm := gonm.FromContext(ctx, dsClient)
 	users := []*User{{ID: 1}, {ID: 2}}
 	if err := gm.DeleteMulti(users); err != nil {
 		// TODO: Handle error.
@@ -83,7 +98,8 @@ func ExampleGonm_DeleteMulti() {
 }
 
 func ExampleGonm_Get() {
-	gm := gonm.FromContext(ctx, testDsClient)
+	ctx := context.Background()
+	gm := gonm.FromContext(ctx, dsClient)
 
 	user := &User{ID: 2}
 	if err := gm.Get(user); err != nil {
@@ -92,7 +108,8 @@ func ExampleGonm_Get() {
 }
 
 func ExampleGonm_GetAll() {
-	gm := gonm.FromContext(ctx, testDsClient)
+	ctx := context.Background()
+	gm := gonm.FromContext(ctx, dsClient)
 
 	var users []*User
 	keys, err := gm.GetAll(datastore.NewQuery("User"), &users)
@@ -107,7 +124,8 @@ func ExampleGonm_GetAll() {
 }
 
 func ExampleGonm_GetKeysOnly() {
-	gm := gonm.FromContext(ctx, testDsClient)
+	ctx := context.Background()
+	gm := gonm.FromContext(ctx, dsClient)
 
 	q := datastore.NewQuery("User").Limit(2)
 
@@ -125,7 +143,8 @@ func ExampleGonm_GetKeysOnly() {
 }
 
 func ExampleGonm_GetMulti() {
-	gm := gonm.FromContext(ctx, testDsClient)
+	ctx := context.Background()
+	gm := gonm.FromContext(ctx, dsClient)
 
 	users := []*User{{ID: 1}, {ID: 2}}
 	if err := gm.GetMulti(users); err != nil {
@@ -134,9 +153,10 @@ func ExampleGonm_GetMulti() {
 }
 
 func ExampleGonm_Mutate() {
-	gm := gonm.FromContext(ctx, testDsClient)
+	ctx := context.Background()
+	gm := gonm.FromContext(ctx, dsClient)
 
-	_, err = gm.Mutate(
+	_, err := gm.Mutate(
 		gonm.NewInsert(&User{ID: 1, Name: "Jack"}),
 		gonm.NewUpsert(&User{ID: 2, Name: "Michael"}),
 		gonm.NewUpdate(&User{ID: 3, Name: "Tom"}),
@@ -148,7 +168,8 @@ func ExampleGonm_Mutate() {
 }
 
 func ExampleGonm_NewTransaction() {
-	gm := gonm.FromContext(ctx, testDsClient)
+	ctx := context.Background()
+	gm := gonm.FromContext(ctx, dsClient)
 
 	tx, err := gm.NewTransaction() // returns GonmTx instead of Gonm
 	if err != nil {
@@ -171,7 +192,8 @@ func ExampleGonm_NewTransaction() {
 }
 
 func ExampleGonm_Put() {
-	gm := gonm.FromContext(ctx, testDsClient)
+	ctx := context.Background()
+	gm := gonm.FromContext(ctx, dsClient)
 
 	if _, err := gm.Put(&User{Name: "Tom"}); err != nil {
 		// TODO: Handle error.
@@ -179,7 +201,8 @@ func ExampleGonm_Put() {
 }
 
 func ExampleGonm_PutMulti() {
-	gm := gonm.FromContext(ctx, testDsClient)
+	ctx := context.Background()
+	gm := gonm.FromContext(ctx, dsClient)
 
 	users := []*User{
 		{Name: "Tom"},
@@ -191,7 +214,8 @@ func ExampleGonm_PutMulti() {
 }
 
 func ExampleGonm_Run() {
-	gm := gonm.FromContext(ctx, testDsClient)
+	ctx := context.Background()
+	gm := gonm.FromContext(ctx, dsClient)
 
 	q := datastore.NewQuery("User").Limit(2)
 	it, err := gm.Run(q)
@@ -202,16 +226,17 @@ func ExampleGonm_Run() {
 }
 
 func ExampleGonm_RunInTransaction() {
-	gm := gonm.FromContext(ctx, testDsClient)
+	ctx := context.Background()
+	gm := gonm.FromContext(ctx, dsClient)
 
 	users := []*User{{ID: 1}, {ID: 2}}
-	_, err = gm.RunInTransaction(func(gmtx *gonm.Gonm) error {
+	_, err := gm.RunInTransaction(func(gmtx *gonm.Gonm) error {
 		if err := gmtx.GetMulti(users); err != nil {
 			return err
 		}
 
 		users[0].Name = "Change"
-		if _, err = gmtx.PutMulti(users); err != nil {
+		if _, err := gmtx.PutMulti(users); err != nil {
 			return err
 		}
 		return nil
