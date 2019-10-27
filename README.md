@@ -119,3 +119,6 @@ _, err = gm.RunInTransaction(func(gm *Gonm) error {
 
 To install and set up the emulator and its environment variables,
 see the documentation at https://cloud.google.com/datastore/docs/tools/datastore-emulator.
+
+## License
+MIT
