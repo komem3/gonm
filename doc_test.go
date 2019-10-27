@@ -3,9 +3,9 @@ package gonm_test
 import (
 	"context"
 	"fmt"
+	"gonm"
 
 	"cloud.google.com/go/datastore"
-	"github.com/komem3/gonm"
 )
 
 type User struct {
