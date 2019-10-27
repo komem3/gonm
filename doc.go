@@ -47,7 +47,7 @@ example: create child-parent relationship
 If you want to use other property as key id, you need to put id tag in structure tag.
 The same applies to the parent key and key name. For parent Key, you need to put parent tag in structure.
 For Key kind, you need to put kind tag in structure.
-Gonm returns ErrNoIdFiled when the id cannot be obtained from the received structure.
+Gonm returns ErrNoIDField when the id cannot be obtained from the received structure.
 
 	type CustomUser struct {
 		Id string `datastore:"-" gonm:"id"`
