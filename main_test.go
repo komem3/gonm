@@ -11,7 +11,7 @@ var testDsClient *datastore.Client
 
 func TestMain(m *testing.M) {
 	ctx := context.Background()
-	client, err := NewDatastoreClient(ctx)
+	client, err := datastore.NewClient(ctx, "")
 	if err != nil {
 		panic(err)
 	}

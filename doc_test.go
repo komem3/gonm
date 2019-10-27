@@ -38,16 +38,6 @@ func ExampleKindWithTag() {
 	// Output: user
 }
 
-func ExampleNewDatastoreClient() {
-	ctx := context.Background()
-	dsClient, err := gonm.NewDatastoreClient(ctx) // or gonm.NewDatastoreClient(ctx, "projectId")
-	if err != nil {
-		panic(err)
-	}
-
-	_ = dsClient
-}
-
 func ExampleGonm_AllocateID() {
 	ctx := context.Background()
 	gm := gonm.FromContext(ctx, dsClient)

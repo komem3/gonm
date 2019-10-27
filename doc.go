@@ -21,12 +21,6 @@ It is simple to use gonm.
 	user := &User{ID: 1}
 	err := gm.Get(user)
 
-
-ProjectID
-
-Gonm auto set projectID if the project ID is set in the environment variable DATASTORE_PROJECT_ID.
-Use SetProjectID if you want to specify it explicitly in your code.
-
 Properties
 
 A key consists of an optional parent key, and parent key generate Parent of structure property.
