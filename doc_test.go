@@ -3,7 +3,7 @@ package gonm_test
 import (
 	"context"
 	"fmt"
-	"gonm"
+	"github.com/komem3/gonm"
 
 	"cloud.google.com/go/datastore"
 )

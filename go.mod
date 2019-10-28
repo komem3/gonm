@@ -1,4 +1,4 @@
-module gonm
+module github.com/komem3/gonm
 
 go 1.13
 
