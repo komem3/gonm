@@ -18,6 +18,7 @@ import (
 
 var datastorePutMultiMaxItems = 500
 
+// Gonm is main struct
 type Gonm struct {
 	// Client store generated datastore.Client. Datastore.Client close when Gonm.Close.
 	// In transaction, Client is nil.
@@ -328,7 +329,6 @@ func (gm *Gonm) getMultiByKeysConsistency(keys []*datastore.Key, dst interface{}
 					}
 					return gm.stackError(err)
 				}
-				return nil
 			} else {
 				err = gm.Client.GetMulti(gm.Context, keys[lo:hi], v.Slice(lo, hi).Interface())
 				if err != nil {
@@ -345,8 +345,8 @@ func (gm *Gonm) getMultiByKeysConsistency(keys []*datastore.Key, dst interface{}
 					vi := v.Index(lo + i).Interface()
 					gm.cache.set(key, vi)
 				}
-				return nil
 			}
+			return nil
 		})
 	}
 
@@ -362,7 +362,7 @@ func (gm *Gonm) getMultiByKeysConsistency(keys []*datastore.Key, dst interface{}
 
 // Put method receive *S and put *S into datastore.
 //
-// If src has no ID filed, this method return ErrNoIdFiled.
+// If src has no ID filed, this method return ErrNoIDField.
 // Also, the structure is complemented with ID after this method.
 // This method return nil as *datastore.Key when success in Transaction.
 func (gm *Gonm) Put(src interface{}) (*datastore.Key, error) {
@@ -437,7 +437,6 @@ func (gm *Gonm) PutMulti(src interface{}) ([]*datastore.Key, error) {
 						gm.cache.delete(key)
 					}
 				}
-				return nil
 
 			} else {
 				rkeys, err = gm.Client.PutMulti(gm.Context, keys[lo:hi], v.Slice(lo, hi).Interface())
@@ -463,8 +462,8 @@ func (gm *Gonm) PutMulti(src interface{}) ([]*datastore.Key, error) {
 					}
 					gm.cache.set(rkeys[i], vi)
 				}
-				return nil
 			}
+			return nil
 		})
 	}
 

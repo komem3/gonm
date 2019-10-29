@@ -2,6 +2,7 @@ package gonm
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"cloud.google.com/go/datastore"
@@ -19,4 +20,5 @@ func TestMain(m *testing.M) {
 	testDsClient = client
 
 	m.Run()
+	os.Exit(0)
 }

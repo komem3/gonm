@@ -193,19 +193,19 @@ func TestGonm_NewTransaction(t *testing.T) {
 			t.Fatal(gm.printStackErrs(err))
 		}
 
-		getModel := []*testModel{{ID: 1}, {ID: 2}}
 		{
+			getModel := []testModel{{ID: 1}, {ID: 2}}
 			gmtx, err := gm.NewTransaction()
 			if err != nil {
 				t.Fatal(gm.printStackErrs(err))
 			}
-			if err = gmtx.GetMulti(getModel); err != nil {
+			if err = gmtx.GetMulti(&getModel); err != nil {
 				t.Fatal(gmtx.printStackErrs(err))
 			}
 			assert.Equal(putModel[0].Name, getModel[0].Name, "gostore GetMulti in Transaction")
 
 			getModel[0].Name = "Hanako"
-			getModel = append(getModel, &testModel{Name: "Jack"})
+			getModel = append(getModel, testModel{Name: "Jack"})
 			if _, err = gmtx.PutMulti(putModel); err != nil {
 				t.Fatal(gmtx.printStackErrs(err))
 			}
@@ -219,7 +219,7 @@ func TestGonm_NewTransaction(t *testing.T) {
 			}
 		}
 
-		getModel = []*testModel{{ID: 1}, {ID: 2}}
+		getModel := []*testModel{{ID: 1}, {ID: 2}}
 		if err = gm.GetMulti(getModel); err != nil {
 			t.Fatal(gm.printStackErrs(err))
 		}

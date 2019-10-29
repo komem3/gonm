@@ -16,7 +16,7 @@ var (
 	// ErrInTransaction is returned when not available method in transaction
 	ErrInTransaction = errors.New("gonm: transaction gonm is not available this method")
 	// ErrNoIDField is returned when struct do not have ID field in tag
-	ErrNoIdFiled = errors.New("gonm: At least one ID or id tag")
+	ErrNoIDField = errors.New("gonm: At least one ID or id tag")
 )
 
 func (gm *Gonm) stackError(err error) error {
@@ -51,6 +51,6 @@ func (gm *Gonm) printStackErrs(err error) string {
 	return str
 }
 
-func (gmtx *GonmTx) printStackErrs(err error) string {
+func (gmtx *Transaction) printStackErrs(err error) string {
 	return gmtx.gonm.printStackErrs(err)
 }

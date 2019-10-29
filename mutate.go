@@ -29,7 +29,7 @@ func (gm *Gonm) Mutate(gmuts ...*Mutation) (ret []*datastore.Key, err error) {
 	for i, gmut := range gmuts {
 		if gmut.err != nil {
 			merr = append(merr, gmut.err)
-			gm.stackError(gmut.err)
+			_ = gm.stackError(gmut.err)
 		}
 		muts[i] = gmut.mutation
 	}
@@ -57,7 +57,6 @@ func (gm *Gonm) Mutate(gmuts ...*Mutation) (ret []*datastore.Key, err error) {
 				gm.cache.delete(gmuts[i].key)
 			}
 		}
-		return nil, nil
 	} else {
 		ret, err = gm.Client.Mutate(gm.Context, muts...)
 		if err != nil {
@@ -74,8 +73,7 @@ func (gm *Gonm) Mutate(gmuts ...*Mutation) (ret []*datastore.Key, err error) {
 			}
 		}
 	}
-
-	return ret, nil
+	return
 }
 
 // NewDelete generate Delete Mutation.

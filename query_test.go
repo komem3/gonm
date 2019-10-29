@@ -56,6 +56,9 @@ func TestGonm_GetKeysOnly(t *testing.T) {
 	q := datastore.NewQuery(Kind(testModel{})).Limit(2)
 
 	keys, cursor, err := gm.GetKeysOnly(q)
+	if err != nil {
+		t.Fatal(err)
+	}
 	dst := make([]testModel, len(keys))
 	if err := gm.GetMultiByKeys(keys, dst); err != nil {
 		t.Fatal(gm.printStackErrs(err))
@@ -65,6 +68,9 @@ func TestGonm_GetKeysOnly(t *testing.T) {
 
 	q = q.Start(cursor)
 	keys, cursor, err = gm.GetKeysOnly(q)
+	if err != nil {
+		t.Fatal(err)
+	}
 	secondDst := make([]testModel, len(keys))
 	if err := gm.GetMultiByKeys(keys, secondDst); err != nil {
 		t.Fatal(gm.printStackErrs(err))
@@ -73,6 +79,9 @@ func TestGonm_GetKeysOnly(t *testing.T) {
 
 	q = q.End(cursor)
 	keys, _, err = gm.GetKeysOnly(q)
+	if err != nil {
+		t.Fatal(err)
+	}
 	thirdDst := make([]testModel, len(keys))
 	if err := gm.GetMultiByKeys(keys, thirdDst); err != nil {
 		t.Fatal(gm.printStackErrs(err))

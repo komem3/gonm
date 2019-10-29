@@ -8,15 +8,13 @@ import (
 )
 
 type testModel2 struct {
-	Id     int64  `datastore:"-" gonm:"id"`
+	id     int64  `datastore:"-" gonm:"id"`
 	Kind   string `datastore:"-" gonm:"kind,test"`
 	Name   string
 	Parent *datastore.Key `datastore:"-"`
 }
 
-type testModel3 struct {
-	Id int64
-}
+type testModel3 struct{}
 
 func TestExtractKey(t *testing.T) {
 	assert := assert.New(t)
@@ -84,7 +82,7 @@ func TestSetStructKey(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.Equal(t, "test", test.Kind, "kind property set kind of pkey")
-	assert.Equal(t, int64(1), test.Id, "Id property set id of pkey")
+	assert.Equal(t, int64(1), test.id, "id property set id of pkey")
 	assert.Equal(t, parentKey, test.Parent, "parent property set parent pkey of pkey")
 
 }

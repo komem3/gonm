@@ -3,9 +3,9 @@ package gonm_test
 import (
 	"context"
 	"fmt"
-	"github.com/komem3/gonm"
 
 	"cloud.google.com/go/datastore"
+	"github.com/komem3/gonm"
 )
 
 type User struct {
@@ -161,7 +161,7 @@ func ExampleGonm_NewTransaction() {
 	ctx := context.Background()
 	gm := gonm.FromContext(ctx, dsClient)
 
-	tx, err := gm.NewTransaction() // returns GonmTx instead of Gonm
+	tx, err := gm.NewTransaction() // returns Transaction instead of Gonm
 	if err != nil {
 		// TODO: Handle error.
 	}

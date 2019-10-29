@@ -15,7 +15,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-type GonmTx struct {
+// Transaction is Transaction mode of Gonm
+type Transaction struct {
 	Transaction *datastore.Transaction
 	Context     context.Context
 	gonm        *Gonm
@@ -51,7 +52,7 @@ func (gm *Gonm) RunInTransaction(f func(gm *Gonm) error, otps ...datastore.Trans
 
 // NewTransaction starts a new Transaction.
 // Get, GetMulti, GetByKey, GetMultiByKeys, GetPut, PutMulti, Delete, and DeleteMulti are only method that can be used.
-func (gm *Gonm) NewTransaction(otps ...datastore.TransactionOption) (gmtx *GonmTx, err error) {
+func (gm *Gonm) NewTransaction(otps ...datastore.TransactionOption) (gmtx *Transaction, err error) {
 	if gm.Transaction != nil {
 		return nil, gm.stackError(ErrInTransaction)
 	}
@@ -59,11 +60,11 @@ func (gm *Gonm) NewTransaction(otps ...datastore.TransactionOption) (gmtx *GonmT
 	if err != nil {
 		return nil, err
 	}
-	return &GonmTx{Transaction: t, Context: gm.Context, gonm: &Gonm{Transaction: t, cache: gm.cache}}, nil
+	return &Transaction{Transaction: t, Context: gm.Context, gonm: &Gonm{Transaction: t, cache: gm.cache}}, nil
 }
 
 // Commit applies the enqueued operations atomically.
-func (gmtx *GonmTx) Commit() (cm *datastore.Commit, err error) {
+func (gmtx *Transaction) Commit() (cm *datastore.Commit, err error) {
 	cm, err = gmtx.Transaction.Commit()
 	if err != nil {
 		return nil, err
@@ -78,27 +79,27 @@ func (gmtx *GonmTx) Commit() (cm *datastore.Commit, err error) {
 }
 
 // Delete is similar as Gonm.Delete
-func (gmtx *GonmTx) Delete(dst interface{}) error {
+func (gmtx *Transaction) Delete(dst interface{}) error {
 	return gmtx.gonm.Delete(dst)
 }
 
 // DeleteMulti is similar as Gonm.DeleteMulti
-func (gmtx *GonmTx) DeleteMulti(dst interface{}) error {
+func (gmtx *Transaction) DeleteMulti(dst interface{}) error {
 	return gmtx.gonm.DeleteMulti(dst)
 }
 
 // Get is similar as Gonm.Get
-func (gmtx *GonmTx) Get(dst interface{}) error {
+func (gmtx *Transaction) Get(dst interface{}) error {
 	return gmtx.gonm.Get(dst)
 }
 
 // GetMulti is similar as Gonm.GetMulti
-func (gmtx *GonmTx) GetMulti(dst interface{}) error {
+func (gmtx *Transaction) GetMulti(dst interface{}) error {
 	return gmtx.gonm.GetMulti(dst)
 }
 
-// Mutation is similar as Gonm.Mutation
-func (gmtx *GonmTx) Mutate(gmuts ...*Mutation) (ret []*datastore.Key, err error) {
+// Mutate is similar as Gonm.Mutation
+func (gmtx *Transaction) Mutate(gmuts ...*Mutation) (ret []*datastore.Key, err error) {
 	return gmtx.gonm.Mutate(gmuts...)
 }
 
@@ -106,7 +107,7 @@ func (gmtx *GonmTx) Mutate(gmuts ...*Mutation) (ret []*datastore.Key, err error)
 //
 // This method do not change incomple key to complete key.
 // If you want to use datastore.Key, you may use Commit.commit(pendingKey)
-func (gmtx *GonmTx) Put(src interface{}) (*datastore.PendingKey, error) {
+func (gmtx *Transaction) Put(src interface{}) (*datastore.PendingKey, error) {
 	v := reflect.ValueOf(src)
 	if v.Kind() != reflect.Ptr {
 		return nil, gmtx.gonm.stackError(fmt.Errorf("gonm: expected pointer to a struct, got %#v", src))
@@ -122,7 +123,7 @@ func (gmtx *GonmTx) Put(src interface{}) (*datastore.PendingKey, error) {
 }
 
 // PutMulti is a bach version of Put.
-func (gmtx *GonmTx) PutMulti(src interface{}) ([]*datastore.PendingKey, error) {
+func (gmtx *Transaction) PutMulti(src interface{}) ([]*datastore.PendingKey, error) {
 	keys, err := extractKeys(src, true) // allow incomplete keys on a Put request
 	if err != nil {
 		return nil, gmtx.gonm.stackError(err)
@@ -186,6 +187,6 @@ func (gmtx *GonmTx) PutMulti(src interface{}) ([]*datastore.PendingKey, error) {
 }
 
 // Rollback abandons a pending Transaction.
-func (gmtx *GonmTx) Rollback() (err error) {
+func (gmtx *Transaction) Rollback() (err error) {
 	return gmtx.Transaction.Rollback()
 }

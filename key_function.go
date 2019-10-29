@@ -112,7 +112,7 @@ func getStructKey(src interface{}) (key *datastore.Key, err error) {
 	}
 
 	if !hasKeyField {
-		return nil, ErrNoIdFiled
+		return nil, ErrNoIDField
 	}
 
 	// if kind has not been manually set, fetch it from src's type
@@ -203,7 +203,7 @@ func setStructKey(src interface{}, key *datastore.Key) error {
 	}
 
 	if !idSet {
-		return ErrNoIdFiled
+		return ErrNoIDField
 	}
 
 	return nil
