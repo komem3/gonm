@@ -3,9 +3,22 @@ executors:
   golang:
     working_directory: &working_directory ~/go/src/github.com/gonm
     docker:
-      - image: circleci/golang:1.13
+      - image: &goimg circleci/golang:1.13
         environment:
           GOPATH: &gopath /home/circleci/go
+
+  golang-datastore:
+    working_directory: *working_directory
+    docker:
+      - image: *goimg
+        environment:
+          GOPATH: *gopath
+          DATASTORE_PROJECT_ID: &datastoreID project-test
+          DATASTORE_EMULATOR_HOST: &datastoreAddr 0.0.0.0:8081
+      - image: singularities/datastore-emulator
+        environment:
+          DATASTORE_PROJECT_ID: *datastoreID
+          DATASTORE_LISTEN_ADDRESS: *datastoreAddr
   
   golangci-lint:
     working_directory: *working_directory
@@ -59,6 +72,15 @@ jobs:
       - save_source
       - restore_module
       - save_module
+    
+  gotest:
+    executor: golang-datastore
+    steps:
+      - restore_source
+      - restore_module
+      - run:
+          name: "exec go test"
+          command: go test ./...
 
   golint:
     executor: golangci-lint
@@ -99,5 +121,8 @@ workflows:
     jobs:
       - prepare
       - golint:
+          requires:
+            - prepare
+      - gotest:
           requires:
             - prepare
