@@ -1,0 +1,103 @@
+version: 2.1
+executors:
+  golang:
+    working_directory: &working_directory ~/go/src/github.com/gonm
+    docker:
+      - image: circleci/golang:1.13
+        environment:
+          GOPATH: &gopath /home/circleci/go
+  
+  golangci-lint:
+    working_directory: *working_directory
+    docker:
+      - image: golangci/golangci-lint:latest
+
+commands:
+  restore_source:
+    description: "restore source code"
+    steps:
+      - restore_cache:
+          keys:
+            - source-v1-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+            - source-v1-{{ .Branch }}
+            - source-v1
+      - checkout
+
+  save_source:
+    description: "save source code"
+    steps:
+      - save_cache:
+          key: source-v1-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+          - ".git"
+
+  restore_module:
+    description: "restore go module"
+    steps:
+      - restore_cache:
+          keys:
+            - go-module-v1-{{ .Branch }}-{ checksum "go.sum" }
+            - go-module-v1-{{ .Branch }}
+            - go-module-v1
+      - run:
+          name: "go module download"
+          command: go mod tidy
+
+  save_module:
+    description: "save go module"
+    steps:
+      - save_cache:
+          key: go-module-v1-{{ .Branch }}-{ checksum "go.sum" }
+          paths:
+          - ~/go/pkg
+
+jobs:
+  prepare:
+    executor: golang
+    steps:
+      - restore_source
+      - save_source
+      - restore_module
+      - save_module
+
+  golint:
+    executor: golangci-lint
+    steps:
+      - restore_source
+      - run:
+          name: "exec golangci-lint"
+          command: |
+            golangci-lint run --disable-all \
+            -E govet \
+            -E errcheck \
+            -E staticcheck \
+            -E unused \
+            -E gosimple \
+            -E structcheck \
+            -E varcheck \
+            -E ineffassign \
+            -E deadcode \
+            -E typecheck \
+            -E golint \
+            -E gosec \
+            -E interfacer \
+            -E unconvert \
+            -E dupl \
+            -E gocyclo \
+            -E goimports \
+            -E depguard \
+            -E misspell \
+            -E unparam \
+            -E dogsled \
+            -E prealloc \
+            -E scopelint \
+            -E gocritic
+
+workflows:
+  version: 2
+  golint:
+    jobs:
+      - prepare
+      - golint:
+          requires:
+            - prepare
