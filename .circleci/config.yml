@@ -31,16 +31,16 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - source-v1-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
-            - source-v1-{{ .Branch }}
-            - source-v1
+            - source-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+            - source-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}
+            - source-{{ .Environment.CACHE_VERSION }}
       - checkout
 
   save_source:
     description: "save source code"
     steps:
       - save_cache:
-          key: source-v1-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+          key: source-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
           paths:
           - ".git"
 
@@ -49,9 +49,9 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - go-module-v1-{{ .Branch }}-{ checksum "go.sum" }
-            - go-module-v1-{{ .Branch }}
-            - go-module-v1
+            - go-module-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{ checksum "go.sum" }
+            - go-module-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}
+            - go-module-{{ .Environment.CACHE_VERSION }}
       - run:
           name: "go module download"
           command: go mod tidy
@@ -60,7 +60,7 @@ commands:
     description: "save go module"
     steps:
       - save_cache:
-          key: go-module-v1-{{ .Branch }}-{ checksum "go.sum" }
+          key: go-module-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{ checksum "go.sum" }
           paths:
           - ~/go/pkg
 
