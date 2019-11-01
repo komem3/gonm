@@ -1,0 +1,128 @@
+version: 2.1
+executors:
+  golang:
+    working_directory: &working_directory ~/go/src/github.com/gonm
+    docker:
+      - image: &goimg circleci/golang:1.13
+        environment:
+          GOPATH: &gopath /home/circleci/go
+
+  golang-datastore:
+    working_directory: *working_directory
+    docker:
+      - image: *goimg
+        environment:
+          GOPATH: *gopath
+          DATASTORE_PROJECT_ID: &datastoreID project-test
+          DATASTORE_EMULATOR_HOST: &datastoreAddr 0.0.0.0:8081
+      - image: singularities/datastore-emulator
+        environment:
+          DATASTORE_PROJECT_ID: *datastoreID
+          DATASTORE_LISTEN_ADDRESS: *datastoreAddr
+  
+  golangci-lint:
+    working_directory: *working_directory
+    docker:
+      - image: golangci/golangci-lint:latest
+
+commands:
+  restore_source:
+    description: "restore source code"
+    steps:
+      - restore_cache:
+          keys:
+            - source-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+            - source-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}
+            - source-{{ .Environment.CACHE_VERSION }}
+      - checkout
+
+  save_source:
+    description: "save source code"
+    steps:
+      - save_cache:
+          key: source-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+          - ".git"
+
+  restore_module:
+    description: "restore go module"
+    steps:
+      - restore_cache:
+          keys:
+            - go-module-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{ checksum "go.sum" }
+            - go-module-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}
+            - go-module-{{ .Environment.CACHE_VERSION }}
+      - run:
+          name: "go module download"
+          command: go mod tidy
+
+  save_module:
+    description: "save go module"
+    steps:
+      - save_cache:
+          key: go-module-{{ .Environment.CACHE_VERSION }}-{{ .Branch }}-{ checksum "go.sum" }
+          paths:
+          - ~/go/pkg
+
+jobs:
+  prepare:
+    executor: golang
+    steps:
+      - restore_source
+      - save_source
+      - restore_module
+      - save_module
+    
+  gotest:
+    executor: golang-datastore
+    steps:
+      - restore_source
+      - restore_module
+      - run:
+          name: "exec go test"
+          command: go test ./...
+
+  golint:
+    executor: golangci-lint
+    steps:
+      - restore_source
+      - run:
+          name: "exec golangci-lint"
+          command: |
+            golangci-lint run --disable-all \
+            -E govet \
+            -E errcheck \
+            -E staticcheck \
+            -E unused \
+            -E gosimple \
+            -E structcheck \
+            -E varcheck \
+            -E ineffassign \
+            -E deadcode \
+            -E typecheck \
+            -E golint \
+            -E gosec \
+            -E interfacer \
+            -E unconvert \
+            -E dupl \
+            -E gocyclo \
+            -E goimports \
+            -E depguard \
+            -E misspell \
+            -E unparam \
+            -E dogsled \
+            -E prealloc \
+            -E scopelint \
+            -E gocritic
+
+workflows:
+  version: 2
+  code-check:
+    jobs:
+      - prepare
+      - golint:
+          requires:
+            - prepare
+      - gotest:
+          requires:
+            - prepare
