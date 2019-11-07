@@ -171,8 +171,7 @@ func setStructKey(src interface{}, key *datastore.Key) error {
 				return fmt.Errorf("gonm: Only one field may be marked id")
 			}
 
-			switch vf.Kind() {
-			case reflect.Int64:
+			if vf.Kind() == reflect.Int64 {
 				vf.SetInt(key.ID)
 				idSet = true
 			}
