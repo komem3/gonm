@@ -175,9 +175,6 @@ func setStructKey(src interface{}, key *datastore.Key) error {
 			case reflect.Int64:
 				vf.SetInt(key.ID)
 				idSet = true
-			case reflect.String:
-				vf.SetString(key.Name)
-				idSet = true
 			}
 
 		case tagValue == "kind":
