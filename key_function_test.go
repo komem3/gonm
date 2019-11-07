@@ -8,10 +8,10 @@ import (
 )
 
 type testModel2 struct {
-	id     int64  `datastore:"-" gonm:"id"`
-	Kind   string `datastore:"-" gonm:"kind,test"`
-	Name   string
-	Parent *datastore.Key `datastore:"-"`
+	IDOther int64  `datastore:"-" gonm:"id"`
+	Kind    string `datastore:"-" gonm:"kind,test"`
+	Name    string
+	Parent  *datastore.Key `datastore:"-"`
 }
 
 type testModel3 struct{}
@@ -82,9 +82,8 @@ func TestSetStructKey(t *testing.T) {
 		t.Fatal(err)
 	}
 	assert.Equal(t, "test", test.Kind, "kind property set kind of pkey")
-	assert.Equal(t, int64(1), test.id, "id property set id of pkey")
+	assert.Equal(t, int64(1), test.IDOther, "id property set id of pkey")
 	assert.Equal(t, parentKey, test.Parent, "parent property set parent pkey of pkey")
-
 }
 
 func TestKind(t *testing.T) {
