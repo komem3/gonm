@@ -19,6 +19,5 @@ func TestMain(m *testing.M) {
 	defer client.Close()
 	testDsClient = client
 
-	m.Run()
-	os.Exit(0)
+	os.Exit(m.Run())
 }
